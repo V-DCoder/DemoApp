@@ -1,7 +1,6 @@
 package com.temp.demoapp;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.location.Criteria;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -14,10 +13,11 @@ import android.widget.Toast;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import io.reactivex.Notification;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
+import io.reactivex.internal.operators.observable.ObservableFromCallable;
 import io.reactivex.schedulers.Schedulers;
 
 public class LoginActivity extends Activity {
@@ -31,7 +31,7 @@ public class LoginActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        initDemo();
+
         setContentView(R.layout.activity_login);
         Button b = findViewById(R.id.btn_login);
         username = (TextView) findViewById(R.id.username);
@@ -39,30 +39,55 @@ public class LoginActivity extends Activity {
         b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (true || validate()) {
-                    Intent intent = new Intent(LoginActivity.this, WorkOrderListActivity.class);
-                    startActivity(intent);
-                    finish();
-                }
+//                if (true || validate()) {
+//                    Intent intent = new Intent(LoginActivity.this, WorkOrderListActivity.class);
+//                    startActivity(intent);
+//                    finish();
+//                }
+                initDemo();
             }
         });
     }
 
     private void initDemo() {
-        CompositeDisposable compositeDisposable = new CompositeDisposable();
-       performaer(5).subscribe(new Consumer<String>() {
+//        CompositeDisposable compositeDisposable = new CompositeDisposable();
+//       performaer(5).subscribe(new Consumer<String>() {
+//            @Override
+//            public void accept(String aBoolean) throws Exception {
+//                Log.w("sadasdas", "from accept");
+//            }
+//        });
+
+        ObservableFromCallable.timer(5, TimeUnit.SECONDS).doOnEach(new Consumer<Notification<Long>>() {
             @Override
-            public void accept(String aBoolean) throws Exception {
-                Log.w("sadasdas", "from accept");
+            public void accept(Notification<Long> longNotification) throws Exception {
+                Log.w("sadasdas", "on each " + longNotification.getValue());
             }
-        });
+        }).doOnNext(new Consumer<Long>() {
+            @Override
+            public void accept(Long aLong) throws Exception {
+                Log.w("sadasdas", "on next " + aLong);
+            }
+        }).
+                subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe();
+
+//        SingleFromCallable.timer(5, TimeUnit.SECONDS).doOnSuccess(new Consumer<Long>() {
+//            @Override
+//            public void accept(Long aLong) throws Exception {
+//                Log.w("sadasdas", "from accept");
+//            }
+//        }).subscribeOn(Schedulers.io())
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribe();
 
     }
 
     private Observable<String> performaer(int millis) {
         String[] items = {"one", "two", "three", "four", "five", "six"};
         return Observable.fromArray(items)
-                .debounce(30,TimeUnit.SECONDS)
+                .debounce(30, TimeUnit.SECONDS)
                 .observeOn(Schedulers.io())
                 .subscribeOn(AndroidSchedulers.mainThread());
 
